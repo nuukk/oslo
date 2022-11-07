@@ -37,3 +37,60 @@ file_copy <- function(...,dir)
   })
   dir_raname
 }
+
+db_upload <- function(dbname,dbuser,dbpw,dbhost,dbport,table,...) 
+{
+  raw <- data.table(...)
+  conn <- dbConnect(dbDriver("MySQL"),dbname=dbname,
+                    user=dbuser,password=dbpw,host=dbhost,
+                    port=dbport)
+  # dbSendQuery(a,"set character set \"euckr\"")
+  if(sum(dbListTables(conn)==table)>0) {
+    if (askYesNo(paste(table,"이라는 테이블이 이미 존재해요! 기존 테이블의 마지막 부분부터 현재 자료를 추가하시겠습니까? (아니오를 선택하면 데이터가 덮어 씌워집니다)"))==TRUE) {
+      dbWriteTable(conn,table,raw,row.names=F,append=TRUE)
+    }
+    else {
+      dbWriteTable(conn,table,raw,row.names=F,overwrite=TRUE)
+    }
+  }
+  else {
+    dbWriteTable(conn,table,raw,row.names=F)
+  }
+  dbDisconnect(conn)
+}
+
+db_read <- function(dbname,dbuser,dbpw,dbhost,dbport,table,...) 
+{
+  conn <- dbConnect(dbDriver("MySQL"),dbname=dbname,
+                    user=dbuser,password=dbpw,host=dbhost,
+                    port=dbport)
+  if(missing(table)) { table <- select.list(dbListTables(conn),graphics=TRUE,title="가져올 테이블을 선택하세요") }
+  if(sum(dbListTables(conn)==table)==0) {
+    message(paste(table,"이라는 테이블이 존재하지 않아요! 리스트에서 골라주세요."))
+    table <- select.list(dbListTables(conn),graphics=TRUE,title="가져올 테이블을 선택하세요")
+  }
+  condition <- rlang::enexprs(...)
+  temp <- data.table(suppressWarnings(collect(filter(tbl(conn,table),condition))))
+  dbDisconnect(conn)
+  assign(x="db_read_table_name",value=table,.GlobalEnv)
+  temp
+}
+
+db_drop <- function(dbname,dbuser,dbpw,dbhost,dbport,table) 
+{
+  conn <- dbConnect(dbDriver("MySQL"),dbname=dbname,
+                    user=dbuser,password=dbpw,host=dbhost,
+                    port=dbport)
+  if (!missing(table)) {
+    dbSendQuery(conn,paste0("drop table ",table,""))
+    message(paste(table,"테이블이 삭제되었습니다."))
+  }
+  else {
+    drop_list <- select.list(dbListTables(conn),graphics=TRUE,multiple=TRUE,title="삭제할 테이블을 선택하세요(다중선택 가능)")
+    lapply(drop_list,function(x) {
+      dbSendQuery(conn,paste0("drop table ",x,""))
+      message(paste0(x,"테이블이 삭제되었습니다."))
+    })
+  }
+  dbDisconnect(conn)
+}
