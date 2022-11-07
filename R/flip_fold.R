@@ -89,11 +89,13 @@ flip_fold <- function(start_date,end_date,aa_raw,gsc_raw,old_file,export_directo
   }
   gsc <- map(gsc,~
                {
-                 flip <- fread(cmd=paste0("findstr /r .flip ","\"",normalizePath(.x),"\""),encoding="UTF-8",col.names=c("date","page","clicks","impressions","ctr","position"))
-                 fold <- fread(cmd=paste0("findstr /r .fold ","\"",normalizePath(.x),"\""),encoding="UTF-8",col.names=c("date","page","clicks","impressions","ctr","position"))
+                 res <- fread(.x,encoding='UTF-8',col.names=c("date","page","clicks","impressions","ctr","position"))
                  sitecode <- toupper(gsub("GSC-RAW-|[0-9]|-.*","",basename(.x)))
-                 res <- bind_rows(flip,fold) %>% mutate(country=sitecode)
+                 setDT(res)[,country:=sitecode]
+                 res
                }) %>% rbindlist
+  setDT(gsc)
+  gsc <- gsc[str_detect(page,'flip') | str_detect(page,'fold')]
   names(aa)[c(5,6)] <- c("date","country")
   aa <- aa[(str_detect(url,"smartphones") & str_detect(url,paste0("z-fold",ver))) | (str_detect(url,"smartphones") & str_detect(url,paste0("z-flip",ver)))]
   gsc <- gsc[(str_detect(page,"smartphones") & str_detect(page,paste0("z-fold",ver))) | (str_detect(page,"smartphones") & str_detect(page,paste0("z-flip",ver)))]
