@@ -1,0 +1,38 @@
+Package: oslo
+Title: oslo
+Version: 7.0.1107
+Authors@R: 
+    person(given = "Myunghoon",
+           family = "Shin",
+           role = c("aut", "cre"),
+           email='111@111.com')
+Description: 
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a license
+Imports: dplyr,
+         dbplyr,
+         data.table,
+         stringr,
+         lubridate,
+         doParallel,
+         plyr,
+         readxl,
+         writexl,
+         DBI,
+         RMySQL,
+         purrr,
+         rlang,
+        gtrendsR,
+        parallel,
+        magrittr,
+        httr,
+        jsonlite,
+        googleLanguageR,
+        readr,
+        searchConsoleR,
+        googleAuthR,
+        EnvStats,
+        adobeanalyticsr,
+        RSelenium,
+        webdriver,
+        rvest
+Encoding: UTF-8
