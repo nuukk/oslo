@@ -1,6 +1,6 @@
 gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_name) {
   lang <- match.arg(lang,choices=c('Arabic','Bengali','Bulgarian','Catalan','Chinese (simplified)','Chinese (traditional)','Croatian','Czech','Danish','Dutch','English','Estonian','Filipino','Finnish','French','German','Greek','Gujarati','Hebrew','Hindi','Hungarian','Icelandic','Indonesian','Italian','Japanese','Kannada','Korean','Latvian','Lithuanian','Malay','Malayalam','Marathi','Norwegian','Persian','Polish','Portuguese','Punjabi','Romanian','Russian','Serbian','Slovak','Slovenian','Spanish','Swedish','Tamil','Telugu','Thai','Turkish','Ukrainian','Urdu','Vietnamese'))
-  Sys.sleep(2+runif(n=1,min=0.25,max=0.8)+abs(rnorm(n=1,mean=0.5,sd=0.25)))
+  Sys.sleep(1+runif(n=1,min=0.25,max=0.5)+abs(rnorm(n=1,mean=0.25,sd=0.25)))
   if(!missing(start_date)) {
     start_date <- paste0(month(as.Date(start_date),label=T,locale='US'),year(start_date))
     remDr$findElement(using='class name',value='date-popup-button')$clickElement()
