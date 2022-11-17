@@ -47,7 +47,7 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
   #keyword
   Sys.sleep(0.35)
   remDr$findElement(using='class name',value='summary')$clickElement()
-  
+  Sys.sleep(0.5+runif(n=1,min=0.15,max=0.5)
   keyword_delete_n <- length(remDr$findElements(using='class name',value='delete-button'))
   while(keyword_delete_n>=1) {
     remDr$findElements(using='class name',value='delete-button')[[keyword_delete_n]]$clickElement() 
