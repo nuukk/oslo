@@ -82,4 +82,5 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
   Sys.sleep(1)
+  print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료'))
 }
