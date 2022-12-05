@@ -14,3 +14,34 @@ googletrendscrawling <- function(keyword,geo,date)
   res$time <- as.character(res$time)
   res
 }
+
+google_trends_scapper <- function(start_date,end_date,keyword,country,new_name) {
+  if(missing(start_date)) start_date <- '2017-12-01'
+  if(missing(end_date)) end_date <- Sys.Date()-days(4)
+  keyword <- gsub(" ","%20",keyword)
+  country <- toupper(country)
+  url <- paste0('https://trends.google.com/trends/explore?date=',start_date,'%20',end_date,'&geo=',country,'&q=',keyword)
+  Sys.sleep(1)
+  remDr$navigate(url)
+  Sys.sleep(1.5)
+  tryCatch({
+    remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
+  }, error=function(e) {
+    Sys.sleep(1.5)
+    remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
+  })
+  #rename
+  Sys.sleep(1)
+  is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                 pattern='multiTimeline.csv'))
+  while(is_finish==0) {
+    Sys.sleep(0.5)
+    is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                   pattern='multiTimeline.csv'))
+  }
+  Sys.sleep(0.8)
+  file.rename(from=map(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                  pattern='multiTimeline.csv',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
+                rbindlist %>% slice_max(time,n=1L) %>% pull(file),
+              to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
+}
