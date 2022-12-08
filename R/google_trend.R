@@ -1,5 +1,6 @@
 googletrendscrawling <- function(keyword,geo,date) 
 {
+  geo <- toupper(geo)
   if(missing(date)) date <- paste("2015-01-01", floor_date(Sys.Date(), "mon")-days(1))
   res <- tryCatch(gtrends(keyword=keyword,geo=geo,time=date,onlyInterest = TRUE)$interest_over_time,
                   error = function(e) {})
@@ -12,6 +13,7 @@ googletrendscrawling <- function(keyword,geo,date)
   res$date <- as.POSIXct(res$date)
   res$hits <- as.character(res$hits)
   res$time <- as.character(res$time)
+  setDT(res)
   res
 }
 
