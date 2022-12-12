@@ -43,7 +43,7 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name) 
   }
   Sys.sleep(0.8)
   file.rename(from=map(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
-                                  pattern='multiTimeline.csv',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
+                                  pattern='multiTimeline',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
 }
