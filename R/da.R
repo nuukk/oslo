@@ -20,7 +20,7 @@ da_comb <- function(filename,table,dbname,dbuser,dbpw,dbhost,dbport,data,dnc,equ
     if(readr::guess_encoding(file=data)$encoding[[1]]== "UTF-8") {
       raw <- fread(data,encoding="UTF-8")
     } else {
-      raw <- suppressMessages(read_csv(data,locale=locale("ko",encoding="euc-kr")))
+      raw <- suppressMessages(readr::read_csv(data,locale=locale("ko",encoding="euc-kr")))
     }
     if(identical(names(raw),c("page","query","clicks","impressions","ctr","position","month","SiteCode","url"))) {
       raw <- raw %>% transmute(page,query,clicks,impressions,ctr,position,date=month,property=gsub(".*com/|/$","",url))
