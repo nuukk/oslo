@@ -17,7 +17,7 @@ da_comb <- function(filename,table,dbname,dbuser,dbpw,dbhost,dbport,data,dnc,equ
     contains <- file_list[str_starts(basename(file_list),"contain")]
     pf <- file_list[str_starts(basename(file_list),"SamsungDA")]
     data <- reduce(list(file_list,dnc,equal,contains,pf),setdiff)
-    if(guess_encoding(file=data)$encoding[[1]]== "UTF-8") {
+    if(readr::guess_encoding(file=data)$encoding[[1]]== "UTF-8") {
       raw <- fread(data,encoding="UTF-8")
     }
     else {
