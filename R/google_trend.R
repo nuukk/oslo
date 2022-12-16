@@ -47,3 +47,45 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name) 
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
 }
+
+google_trends_read <- function(file_list) {
+  if(missing(file_list)) file_list <- choose.files(caption='Google Trends RAW 파일을 선택하세요')
+  if(dir.exists(file_list[[1]])) file_list <- list.files(file_list,full.names=T)
+  file_list <- normalizePath(file_list)
+  map(file_list, ~ {
+    res <- fread(.x,encoding='UTF-8',header=F)
+    if(nrow(res)>=2) {
+      for(i in seq_along(names(res)[-1])) {
+        res[[names(res)[-1][i]]][1] <- gsub(": \\(.*","",res[[names(res)[-1][i]]][1])
+      }
+      res <- res %>% melt(id='V1')
+      n <- data.table(start=which(str_detect(res$V1,'주'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
+      res[,keyword:=NA]
+      for(i in seq_len(nrow(n))) {
+        res$keyword[n$start[i]:n$end[i]] <- res$value[n$start[i]]
+      }
+      res <- res[V1!='주']
+      res[,`:=`(google_code=gsub("\\+.*","",gsub(".*s-","",basename(.x))),
+                geo=toupper(gsub(".*=|.csv$","",basename(.x))),
+                gbm=gsub("\\+.*","",basename(.x)))]
+      res <- res[,.(date=V1,geo,gbm,keyword,hits=value)]
+    } else {
+      for(i in seq_along(names(res)[-1])) {
+        res[[names(res)[-1][i]]][1] <- gsub(": \\(.*","",res[[names(res)[-1][i]]][1])
+      }
+      res <- bind_rows(res,data.table(NA))
+      res <- res %>% melt(id='V1')
+      n <- data.table(start=which(str_detect(res$V1,'주'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
+      res[,keyword:=NA]
+      for(i in seq_len(nrow(n))) {
+        res$keyword[n$start[i]:n$end[i]] <- res$value[n$start[i]]
+      }
+      res <- res[!is.na(V1) | V1!='주']
+      res[,`:=`(google_code=gsub("\\+.*","",gsub(".*s-","",basename(.x))),
+                geo=toupper(gsub(".*=|.csv$","",basename(.x))),
+                gbm=gsub("\\+.*","",basename(.x)))]
+      res <- res[,.(date=V1,geo,gbm,keyword,hits=value)]
+    }
+  }) %>% rbindlist -> res
+  res
+}
