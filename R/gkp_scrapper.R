@@ -153,7 +153,17 @@ gkp_scrapper2 <- function(start_date,end_date,keyword,country,new_name) {
   print(paste0(country,' - ',start_date,'~',end_date,' 추출 완료'))
 }
 
-gkp_simple <- function(start_date,end_date,country,new_name) {
+gkp_simple <- function(keyword,start_date,end_date,country,new_name) {
+  remDr$navigate('https://ads.google.com/aw/keywordplanner/home?ocid=143996665&euid=556090245&__u=2335343005&uscid=769929296&__c=6457252304&authuser=1&subid=kr-ko-ha-aw-bk-a-m00%21o3~EAIaIQobChMIl7-T69_O9wIVwrWWCh2nvQGGEAAYASAAEgLjz_D_BwE~81876026093~kwd-324689985256~7918679677~434634269425')
+  Sys.sleep(7)
+  remDr$findElements(using='class name',value='secondary-text')[[2]]$clickElement()
+  Sys.sleep(1.5)
+  #keyword
+  keyword_box <- remDr$findElement(using='css',value='[aria-label="Enter or paste your keywords, one word or phrase per line, or separated by commas"]')
+  keyword_box$clickElement()
+  keyword_box$sendKeysToElement(list(keyword))
+  remDr$findElement(using='class name',value='submit-button')$clickElement()
+  Sys.sleep(6.5)
   if(!missing(start_date)) {
     start_date <- paste0(month(as.Date(start_date),label=T,locale='US'),year(start_date))
     remDr$findElement(using='class name',value='date-popup-button')$clickElement()
