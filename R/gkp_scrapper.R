@@ -153,7 +153,7 @@ gkp_scrapper2 <- function(start_date,end_date,keyword,country,new_name) {
   print(paste0(country,' - ',start_date,'~',end_date,' 추출 완료'))
 }
 
-gkp_simple <- function(keyword,start_date,end_date,country,new_name) {
+gkp_simple <- function(keyword,start_date,end_date,country,new_name,print=FALSE) {
   remDr$navigate('https://ads.google.com/aw/keywordplanner/home?ocid=143996665&euid=556090245&__u=2335343005&uscid=769929296&__c=6457252304&authuser=1&subid=kr-ko-ha-aw-bk-a-m00%21o3~EAIaIQobChMIl7-T69_O9wIVwrWWCh2nvQGGEAAYASAAEgLjz_D_BwE~81876026093~kwd-324689985256~7918679677~434634269425')
   Sys.sleep(7)
   remDr$findElements(using='class name',value='secondary-text')[[2]]$clickElement()
@@ -215,6 +215,6 @@ gkp_simple <- function(keyword,start_date,end_date,country,new_name) {
                   rbindlist %>% slice_max(time,n=1L) %>% pull(file),
                 to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
     Sys.sleep(1)
-    print(paste0(country,' - ',start_date,'~',end_date,' 추출 완료'))
+    if(print==TRUE) { print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료')) }
   }
 }
