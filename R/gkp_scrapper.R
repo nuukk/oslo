@@ -1,4 +1,4 @@
-gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_name) {
+gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_name,print=FALSE) {
   lang <- match.arg(lang,choices=c('Arabic','Bengali','Bulgarian','Catalan','Chinese (simplified)','Chinese (traditional)','Croatian','Czech','Danish','Dutch','English','Estonian','Filipino','Finnish','French','German','Greek','Gujarati','Hebrew','Hindi','Hungarian','Icelandic','Indonesian','Italian','Japanese','Kannada','Korean','Latvian','Lithuanian','Malay','Malayalam','Marathi','Norwegian','Persian','Polish','Portuguese','Punjabi','Romanian','Russian','Serbian','Slovak','Slovenian','Spanish','Swedish','Tamil','Telugu','Thai','Turkish','Ukrainian','Urdu','Vietnamese'))
   Sys.sleep(1+runif(n=1,min=0.25,max=0.5)+abs(rnorm(n=1,mean=0.25,sd=0.25)))
   if(!missing(start_date)) {
@@ -82,7 +82,7 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
   Sys.sleep(1)
-  print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료'))
+  if(print==TRUE) { print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료')) }
 }
 
 gkp_scrapper2 <- function(start_date,end_date,keyword,country,new_name) {
