@@ -50,7 +50,7 @@ flip_fold <- function(start_date,end_date,aa_raw,gsc_raw,old_file,export_directo
                 Sys.sleep(delay_time)+round(runif(n=1,min=0.1,max=0.5),2)
               }
             }
-          })
+          }, .progress=TRUE)
     aa <- list.files(normalizePath(paste0(export_directory,"/aa_raw")),full.names=T)
   } else {
     aa <- list.files(aa_raw,full.names=T)
@@ -81,7 +81,7 @@ flip_fold <- function(start_date,end_date,aa_raw,gsc_raw,old_file,export_directo
                 save_csv(filename=paste0("GSC-RAW","-",.x,"-",date[[i]]),
                          dir=normalizePath(paste0(export_directory,"/gsc_raw")))
               Sys.sleep(delay_time)+round(runif(n=1,min=0.1,max=0.5),2)
-            })
+            }, .progress=TRUE)
     }
     gsc <- list.files(normalizePath(paste0(export_directory,"/gsc_raw")),full.names=T)
   } else {
