@@ -34,7 +34,7 @@ file_copy <- function(...,dir)
   dir.create(paste0("C:/",dir_raname))
   map(file_list,~ {
     file.copy(from=.x,to=file.path(paste0("C:/",dir_raname),gsub("[^A-z0-9|\\.]","",basename(.x))))
-  })
+  }, .progress=TRUE)
   dir_raname
 }
 
