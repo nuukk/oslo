@@ -1,6 +1,6 @@
 Package: oslo
 Title: oslo
-Version: 7.0.1107
+Version: 8.0.0103
 Authors@R: 
     person(given = "Myunghoon",
            family = "Shin",
@@ -19,7 +19,7 @@ Imports: dplyr,
          writexl,
          DBI,
          RMySQL,
-         purrr,
+        purrr (>=1.0.0),
          rlang,
         gtrendsR,
         parallel,
