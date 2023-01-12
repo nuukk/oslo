@@ -27,11 +27,13 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
   old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
   if(old_country!=country) {
     remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
-    remDr$findElement(using='class name',value='remove')$clickElement() #기존 설정된 location 제거
-    remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
-    remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country)) #location 입력
-    Sys.sleep(2)
-    remDr$findElement(using='class name',value='suggestion-item')$clickElement() #enter
+    remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 location 제거
+    for(i in seq_along(country)) {
+      remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
+      remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country[[i]])) #location 입력
+      Sys.sleep(2)
+      remDr$findElement(using='class name',value='suggestion-item')$clickElement() #enter
+    }
     remDr$findElements(using='class name',value='btn-yes')[[3]]$clickElement() #save
   }
   
