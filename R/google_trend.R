@@ -17,7 +17,7 @@ googletrendscrawling <- function(keyword,geo,date)
   res
 }
 
-google_trends_scapper <- function(start_date,end_date,keyword,country,new_name) {
+google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,capture_path=NULL) {
   if(missing(start_date)) start_date <- '2017-12-01'
   if(missing(end_date)) end_date <- Sys.Date()-days(4)
   keyword <- gsub(" ","%20",keyword)
@@ -46,6 +46,9 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name) 
                                   pattern='multiTimeline',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
+  if(!is.null(capture_path)) {
+    remDr$screenshot(file=file.path(capture_path,paste0(new_name,'.jpg')))
+  }
 }
 
 google_trends_read <- function(file_list) {
