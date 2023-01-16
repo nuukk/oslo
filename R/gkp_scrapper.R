@@ -22,12 +22,12 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
   }
   ##location
   x <- remDr$getPageSource()[[1]]
-  country <- ifelse(gsub(" ","",tolower(country))=='hongkong','hong kong region',country)
   old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
   old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
   if(old_country!=country) {
     remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
-    remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 location 제거
+    remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 모든 location 제거
+    country <- str_split(country,',')[[1]]
     for(i in seq_along(country)) {
       remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
       remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country[[i]])) #location 입력
