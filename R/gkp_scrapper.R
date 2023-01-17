@@ -266,5 +266,6 @@ gkp_read <- function(file_list,country,gbm=NULL,product_type=NULL,type) {
     }
   }, .progress=TRUE) %>% rbindlist
   ans <- ans %>% filter(get(names(ans)[str_detect(tolower(names(ans)),'keyword')])!="")
+  save_csv(ans,filename='GKP-전처리')
   ans
 }
