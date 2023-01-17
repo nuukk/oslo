@@ -90,8 +90,8 @@ google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
       res[,geo:=geo]
       res <- res[,.(date=V1,geo,keyword,hits=value)]
     }
-    if(!is.null(gbm)) { res <- res %>% mutate(GBM=gbm) %>% relocate(GBM, .before=keyword) }
-    if(!is.null(product_type)) { res <- res %>% mutate(Product_type=product_type) %>% relocate(Product_Type, .before=keyword)}
+    if(!is.null(gbm)) { res <- res %>% mutate(GBM=gsub(gbm,"",basename(.x))) %>% relocate(GBM, .before=keyword) }
+    if(!is.null(product_type)) { res <- res %>% mutate(Product_type=gsub(product_type,"",basename(.x))) %>% relocate(Product_Type, .before=keyword)}
     res
   }) %>% rbindlist -> res
   res
