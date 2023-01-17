@@ -222,6 +222,7 @@ gkp_simple <- function(keyword,start_date,end_date,country,new_name,print=FALSE)
 }
 
 gkp_read <- function(file_list,country,gbm=NULL,product_type=NULL,type) {
+  if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
   type <- match.arg(type,choices=c('extended','base'))
   ans <- map(file_list, ~ {
     gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
