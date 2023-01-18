@@ -226,23 +226,22 @@ gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name,exp
   type <- match.arg(type,choices=c('extended','base'))
   ans <- map(file_list, ~ {
     gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
-    res <- gkp %>% select(Keyword,starts_with('Search'))
+    res <- gkp %>% select(Keyword,starts_with('Search')) %>% data.table %>% melt(id='Keyword')
     names(res)[str_detect(names(res),'Searches')] <- gsub("Searches..","",names(res)[str_detect(names(res),'Searches')])
     country <- gsub(country,"",basename(.x))
     if(!is.na(gbm)) gbm <- gsub(gbm,"",basename(.x))
     if(!is.na(product_type)) product_type <- gsub(product_type,"",basename(.x))
     if(type=='extended') {
-      gkp_res <- res %>% data.table %>% melt(id='Keyword') %>% transmute(country,gbm,product_type,
-                                                                         Keyword=Keyword,
-                                                                         Is_extended=case_when(Keyword==res$Keyword[1] ~ 'Base',TRUE ~ 'Extended'),
-                                                                         Main_keyword=res$Keyword[1],
-                                                                         Date=my(variable),value) %>% 
+      gkp_res <- res %>% transmute(country,gbm,product_type,Keyword=Keyword,
+                                   Is_extended=case_when(Keyword==res$Keyword[1] ~ 'Base',TRUE ~ 'Extended'),
+                                   Main_keyword=res$Keyword[1],
+                                   Date=my(variable),value) %>% 
         group_by(country,gbm,product_type,Main_keyword,Date,Is_extended) %>% summarize(value=sum(value,na.rm=T)) %>% suppressMessages %>% data.table %>% melt(measure='value') %>% dcast(country+gbm+product_type+Main_keyword+Date~Is_extended,)
       gkp_res$Base[is.na(gkp_res$Base)] <- 0
       gkp_res$Extended[is.na(gkp_res$Extended)] <- 0
       gkp_res <- gkp_res %>% rowwise %>% mutate(Extended=sum(Base,Extended,na.rm=T))
     } else {
-      gkp_res <- res %>% data.table %>% melt(id='Keyword') %>% transmute(country,gbm,product_type,keyword=Keyword,month=my(variable),searches_GKP=value)
+      gkp_res <- res %>% transmute(country,gbm,product_type,keyword=Keyword,month=my(variable),searches_GKP=value)
       gkp_res$searches_GKP[is.na(gkp_res$searches_GKP)] <- 0
     }
     if(is.na(gbm)) { gkp_res <- gkp_res %>% select(-gbm) }
