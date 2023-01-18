@@ -1,6 +1,6 @@
 Package: oslo
 Title: oslo
-Version: 8.0.0103
+Version: 9.0.0118
 Authors@R: 
     person(given = "Myunghoon",
            family = "Shin",
