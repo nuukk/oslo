@@ -23,7 +23,7 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
   ##location
   x <- remDr$getPageSource()[[1]]
   old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
-  old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
+  # old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
   if(old_country!=country) {
     remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
     old_country0 <- map(seq_len(length(remDr$findElements(using='class name',value='target-description'))), ~ remDr$findElements(using='class name',value='target-description')[[.x]]$getElementText()[[1]]) %>% as.character %>% gsub("\ncountry","",.)
