@@ -257,3 +257,18 @@ gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name,exp
   save_csv(ans,filename=save_name,dir=export_dir)
   ans
 }
+
+se_install <- function(path) {
+  path <- paste0('C:/',path)
+  dir.create(path)
+  download.file(url='https://github.com/mozilla/geckodriver/releases/download/v0.17.0/geckodriver-v0.17.0-win64.zip',
+                destfile=file.path(path,'geckodriver.zip'))
+  unzip(zipfile=file.path(path,'geckodriver.zip'),exdir=path)
+  file.remove(file.path(path,'geckodriver.zip'))
+  download.file(url='http://selenium-release.storage.googleapis.com/4.0/selenium-server-standalone-4.0.0-alpha-1.jar',
+                destfile=file.path(path,'selenium-server-standalone-4.0.0-alpha-1.jar'))
+  download.file(url='https://chromedriver.storage.googleapis.com/109.0.5414.74/chromedriver_win32.zip',
+                destfile=file.path(path,'chrome-driver.zip'))
+  unzip(zipfile=file.path(path,'chrome-driver.zip'),files='chromedriver.exe',exdir=path)
+  file.remove(file.path(path,'chrome-driver.zip'))
+}
