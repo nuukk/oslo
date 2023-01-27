@@ -94,3 +94,16 @@ db_drop <- function(dbname,dbuser,dbpw,dbhost,dbport,table)
   }
   dbDisconnect(conn)
 }
+
+fail_record <- function(...,filename,dir) {
+  res <- data.table(...)
+  if(!grepl('.csv$',filename)) filename <- paste0(filename,'.csv')
+  if(file.exists(file.path(dir,filename))) {
+    append_option <- TRUE
+    header_option <- FALSE
+  } else {
+    append_option <- FALSE
+    header_option <- TRUE
+  }
+  write.table(x=res,file=file.path(dir,filename),col.names=header_option,row.names=F,sep="\t",append=append_option)
+}
