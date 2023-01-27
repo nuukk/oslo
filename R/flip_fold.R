@@ -93,7 +93,7 @@ flip_fold <- function(start_date,end_date,aa_raw,gsc_raw,old_file,export_directo
                  sitecode <- toupper(gsub("GSC-RAW-|[0-9]|-.*","",basename(.x)))
                  setDT(res)[,country:=sitecode]
                  res
-               }) %>% rbindlist
+               }, .progress=TRUE) %>% rbindlist
   setDT(gsc)
   gsc <- gsc[str_detect(page,'flip') | str_detect(page,'fold')]
   names(aa)[c(5,6)] <- c("date","country")
