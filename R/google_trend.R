@@ -67,12 +67,12 @@ google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
         res[[names(res)[-1][i]]][1] <- gsub(": \\(.*","",res[[names(res)[-1][i]]][1])
       }
       res <- res %>% melt(id='V1')
-      n <- data.table(start=which(str_detect(res$V1,'주|월'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
+      n <- data.table(start=which(str_detect(res$V1,'주|월|일'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
       res[,keyword:=NA]
       for(i in seq_len(nrow(n))) {
         res$keyword[n$start[i]:n$end[i]] <- res$value[n$start[i]]
       }
-      res <- res[V1!='주']
+      res <- res[!V1 %chin% c('월','주','일')]
       res[,geo:=geo]
       res <- res[,.(date=V1,geo,keyword,hits=value)]
     } else {
@@ -81,12 +81,12 @@ google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
       }
       res <- bind_rows(res,data.table(NA))
       res <- res %>% melt(id='V1')
-      n <- data.table(start=which(str_detect(res$V1,'주|월'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
+      n <- data.table(start=which(str_detect(res$V1,'주|월|일'))) %>% mutate(end=lead(start,n=1L,default=nrow(res)+1)-1)
       res[,keyword:=NA]
       for(i in seq_len(nrow(n))) {
         res$keyword[n$start[i]:n$end[i]] <- res$value[n$start[i]]
       }
-      res <- res[!is.na(V1) | V1!='주|월']
+      res <- res[!V1 %chin% c('월','주','일')]
       res[,geo:=geo]
       res <- res[,.(date=V1,geo,keyword,hits=value)]
     }
