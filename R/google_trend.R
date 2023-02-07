@@ -22,6 +22,7 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,c
   if(missing(end_date)) end_date <- Sys.Date()-days(4)
   keyword <- gsub(" ","%20",keyword)
   country <- toupper(country)
+  if(tolower(country) %chin% c('worldwide','global')) { country <- '' }
   url <- paste0('https://trends.google.com/trends/explore?date=',start_date,'%20',end_date,'&geo=',country,'&q=',keyword)
   Sys.sleep(1)
   remDr$navigate(url)
