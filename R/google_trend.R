@@ -27,20 +27,14 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,c
   Sys.sleep(1)
   remDr$navigate(url)
   Sys.sleep(1.5)
-  try({
-    tryCatch({
-      remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
-    }, error=function(e) {
-      Sys.sleep(1.5)
-      remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
-    })
-    #rename
-    Sys.sleep(1)
+  remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
+  #rename
+  Sys.sleep(1)
+  is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                 pattern='multiTimeline.csv'))
+  while(is_finish==0) {
+    Sys.sleep(0.5)
     is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
-                                   pattern='multiTimeline.csv'))
-    while(is_finish==0) {
-      Sys.sleep(0.5)
-      is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
                                      pattern='multiTimeline.csv'))
     }
     Sys.sleep(0.8)
@@ -51,7 +45,6 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,c
     if(!is.null(capture_path)) {
       remDr$screenshot(file=file.path(capture_path,paste0(new_name,'.jpg')))
     }
-  })
 }
 
 google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
