@@ -260,6 +260,35 @@ gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name=NUL
   ans
 }
 
+gkp_read2 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,save_name=NULL,export_dir) {
+  if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
+  ans <- map(file_list, ~ {
+    gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
+    res <- gkp %>% select(Keyword,starts_with('Search')) %>% data.table %>% melt(id='Keyword')
+    res[,`:=`(variable=my(gsub("Searches..","",variable)),
+              Is_extended=fcase(rowid(variable)==1,'Base',
+                                default='Extended'),
+              Seed_Keyword=res$Keyword[[1]])]
+    country <- gsub(country,"",basename(.x))
+    if(!is.na(com_code)) com_code <- gsub(com_code,"",basename(.x))
+    if(!is.na(gbm)) gbm <- gsub(gbm,"",basename(.x))
+    if(!is.na(product_type)) product_type <- gsub(product_type,"",basename(.x))
+    
+    res <- res %>% group_by(Region=country,Com_code=com_code,GBM=gbm,Product_type=product_type,
+                            Seed_Keyword,Keyword,Seed_Related=Is_extended,Year=year(variable)) %>%
+      summarize(Search_Volume=sum(value,na.rm=T)) %>% arrange(Seed_Related) %>% ungroup %>% 
+      suppressMessages
+    if(is.na(com_code)) { res <- res %>% select(-Com_code) }
+    if(is.na(gbm)) { res <- res %>% select(-GBM) }
+    if(is.na(product_type)) { res <- res %>% select(-Product_type)}
+  }, .progress=TRUE) %>% rbindlist
+  if(!is.null(save_name)) {
+    if(missing(export_dir)) { export_dir <- choose.dir(caption='전처리된 자료를 저장할 폴더를 선택하세요' )}
+    save_csv(ans,filename=save_name,dir=export_dir)
+  }
+  ans
+}
+
 se_install <- function(path) {
   path <- paste0('C:/',path)
   dir.create(path)
