@@ -225,7 +225,7 @@ gkp_simple <- function(keyword,start_date,end_date,country,new_name,print=FALSE)
   }
 }
 
-gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name,export_dir) {
+gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name=NULL,export_dir) {
   if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
   type <- match.arg(type,choices=c('extended','base'))
   ans <- map(file_list, ~ {
@@ -253,8 +253,10 @@ gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name,exp
     gkp_res
   }, .progress=TRUE) %>% rbindlist
   ans <- ans %>% filter(get(names(ans)[str_detect(tolower(names(ans)),'keyword')])!="")
-  if(missing(export_dir)) { export_dir <- choose.dir(caption='전처리된 자료를 저장할 폴더를 선택하세요' )}
-  save_csv(ans,filename=save_name,dir=export_dir)
+  if(!is.null(save_name)) {
+    if(missing(export_dir)) { export_dir <- choose.dir(caption='전처리된 자료를 저장할 폴더를 선택하세요' )}
+    save_csv(ans,filename=save_name,dir=export_dir)
+  }
   ans
 }
 
