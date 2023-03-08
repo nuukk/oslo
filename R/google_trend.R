@@ -30,21 +30,25 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,c
   remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
   #rename
   Sys.sleep(1)
-  is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
-                                 pattern='multiTimeline.csv'))
+  is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),pattern='multiTimeline.csv'))
   while(is_finish==0) {
     Sys.sleep(0.5)
-    is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
-                                     pattern='multiTimeline.csv'))
+    is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),pattern='multiTimeline.csv'))
+    is_geomap <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),pattern='geoMap.csv'))
+    while(is_geomap>0) {
+      file.remove(file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads","GeoMap.csv"))
+      remDr$findElement(using='class name',value='widget-actions-item')$clickElement()
+      is_geomap <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),pattern='geoMap.csv'))
     }
-    Sys.sleep(0.8)
-    file.rename(from=map(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
-                                    pattern='multiTimeline',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
-                  rbindlist %>% slice_max(time,n=1L) %>% pull(file),
-                to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
-    if(!is.null(capture_path)) {
-      remDr$screenshot(file=file.path(capture_path,paste0(new_name,'.jpg')))
-    }
+  }
+  Sys.sleep(0.8)
+  file.rename(from=map(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                  pattern='multiTimeline',full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
+                rbindlist %>% slice_max(time,n=1L) %>% pull(file),
+              to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
+  if(!is.null(capture_path)) {
+    remDr$screenshot(file=file.path(capture_path,paste0(new_name,'.jpg')))
+  }
 }
 
 google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
