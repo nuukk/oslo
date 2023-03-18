@@ -51,7 +51,7 @@ google_trends_scapper <- function(start_date,end_date,keyword,country,new_name,c
   }
 }
 
-google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
+google_trends_read <- function(file_list,gbm=NULL,product_type=NULL,var=NULL) {
   if(missing(file_list)) file_list <- choose.files(caption='Google Trends RAW 파일을 선택하세요')
   if(dir.exists(file_list[[1]])) file_list <- list.files(file_list,full.names=T)
   file_list <- normalizePath(file_list)
@@ -89,7 +89,8 @@ google_trends_read <- function(file_list,gbm=NULL,product_type=NULL) {
       res <- res[,.(date=V1,geo,keyword,hits=value)]
     }
     if(!is.null(gbm)) { res <- res %>% mutate(GBM=gsub(gbm,"",basename(.x))) %>% relocate(GBM, .before=keyword) }
-    if(!is.null(product_type)) { res <- res %>% mutate(Product_type=gsub(product_type,"",basename(.x))) %>% relocate(Product_Type, .before=keyword)}
+    if(!is.null(product_type)) { res <- res %>% mutate(product_type=gsub(product_type,"",basename(.x))) %>% relocate(product_type, .before=keyword)}
+    if(!is.null(var)) { res <- res %>% mutate(var=gsub(var,"",basename(.x)))}
     res
   }) %>% rbindlist -> res
   res
