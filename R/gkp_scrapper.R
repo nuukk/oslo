@@ -319,7 +319,7 @@ gkp_read3 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     } else {
       res <- res %>% group_by(month=floor_date(variable,unit='months'),.add=T)
     }
-    res <- res %>% summarize(Search_Volume=sum(value,na.rm=T)) %>% arrange(Seed_Related) %>% ungroup %>% 
+    res <- res %>% summarize(Searches_GKP=sum(value,na.rm=T)) %>% arrange(Seed_Related) %>% ungroup %>% 
       suppressMessages
     if(is.na(com_code)) { res <- res %>% select(-Com_code) }
     if(is.na(gbm)) { res <- res %>% select(-GBM) }
