@@ -356,16 +356,15 @@ gkp_read4 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     if(!is.na(gbm)) gbm <- gsub(gbm,"",basename(.x))
     if(!is.na(product_type)) product_type <- gsub(product_type,"",basename(.x))
     res <- res %>% transmute(Region=country,com_code=com_code,gbm=gbm,product_type=product_type,
-                             Keyword,Seed_Related=Is_extended,date=variable,searches_gkp=value)
-    
-    
-    if(is.na(gbm)) { res <- res %>% select(-gbm) }
-    if(is.na(product_type)) { res <- res %>% select(-product_type) }
-    if(is.na(com_code)) { res <- res %>% select(-com_code) }
+                             Keyword,Seed_Related=factor(Is_extended,levels=c('Seed','Related')),date=variable,searches_gkp=value) %>% 
+      arrange(Region,Seed_Related,date)
     setDT(res)
     res
   },.progress=TRUE) %>% rbindlist
-  ans <- funique(ans)
+  ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword'))
+  if(is.na(gbm)) { ans <- ans %>% select(-gbm) }
+  if(is.na(product_type)) { ans <- ans %>% select(-product_type) }
+  if(is.na(com_code)) { ans <- ans %>% select(-com_code) }
   if(date_interval=='year') {
     ans[,year:=year(date)]
     ans <- ans[,.(searches_gkp=sum(searches_gkp,na.rm=T)),by=c('Region','com_code','gbm','Keyword','Seed_Related','year')]
@@ -373,12 +372,13 @@ gkp_read4 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     ans[,month:=date]
     ans <- ans[,.(searches_gkp=sum(searches_gkp,na.rm=T)),by=c('Region','com_code','gbm','Keyword','Seed_Related','month')]
   }
-    if(!is.null(save_name)) {
+  if(!is.null(save_name)) {
     if(missing(export_dir)) { export_dir <- choose.dir(caption='전처리된 자료를 저장할 폴더를 선택하세요' )}
     save_csv(ans,filename=save_name,dir=export_dir)
   }
   ans
 }
+
 
 se_install <- function(path) {
   path <- paste0('C:/',path)
