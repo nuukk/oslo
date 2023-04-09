@@ -1,6 +1,6 @@
 Package: oslo
 Title: oslo
-Version: 10.0.0125
+Version: 11.0.0409
 Authors@R: 
     person(given = "Myunghoon",
            family = "Shin",
@@ -34,5 +34,6 @@ Imports: dplyr,
         adobeanalyticsr,
         RSelenium,
         webdriver,
-        rvest
+        rvest,
+        collapse
 Encoding: UTF-8
