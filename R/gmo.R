@@ -79,8 +79,8 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
   res
 }
 
-gmo_aggregate <- function(df,old_file=NULL) {
-  raw <- setDT(df)
+gmo_aggregate <- function(dfname,old_file=NULL) {
+  raw <- setDT(dfname)
   raw$smartphones[is.na(raw$smartphones)] <- ""
   raw$`2nd`[is.na(raw$`2nd`)] <- ""
   raw$series[is.na(raw$series)] <- ""
@@ -102,6 +102,7 @@ gmo_aggregate <- function(df,old_file=NULL) {
 }
 
 frog_pagetype <- function(file_list) {
+  if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW XSLX 파일(들)을 선택해주세요')
   file_list <- normalizePath(file_list)
   res <- future_map(file_list, \(x) {
     raw <- fread(x,select=c('Address','Global P6 pageTrack 1','US P5 pageTrack 1','Global P6 Page Template 1','Status Code 1'))
