@@ -1,5 +1,5 @@
 gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbuser,dbpow,dbhost,dbport) {
-  if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW XSLX 파일(들)을 선택해주세요')
+  if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW  파일(들)을 선택해주세요')
   file_list <- normalizePath(file_list)
   series <- read_excel(excel_file,sheet="series_R", skip=2) %>% transmute(model=분류, cond=`3rd_4th_조건`)
   read_excel(excel_file,sheet='사업부별',skip=2) %>%
@@ -102,7 +102,7 @@ gmo_aggregate <- function(dfname,old_file=NULL) {
 }
 
 frog_pagetype <- function(file_list) {
-  if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW XSLX 파일(들)을 선택해주세요')
+  if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW 엑셀 파일(들)을 선택해주세요')
   file_list <- normalizePath(file_list)
   res <- future_map(file_list, \(x) {
     raw <- fread(x,select=c('Address','Global P6 pageTrack 1','US P5 pageTrack 1','Global P6 Page Template 1','Status Code 1'))
