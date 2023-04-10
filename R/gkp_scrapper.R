@@ -347,7 +347,7 @@ gkp_read4 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
                                   default='Related'),
                 Seed_Keyword=res$Keyword[[1]])]
     } else {
-      seed_kw <- str_split(seed_kw$kw[seed_kw$obs==res$obs[1]],',')[[1]]
+      seed_kw <- tolower(str_split(seed_kw$kw[seed_kw$obs==res$obs[1]],',')[[1]])
       res[,`:=`(Is_extended=fcase(Keyword %chin% seed_kw, 'Seed',
                                   default='Related'))]
     }
@@ -361,7 +361,7 @@ gkp_read4 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     setDT(res)
     res
   },.progress=TRUE) %>% rbindlist
-  ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword'))
+  ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword','date'))
   if(is.na(gbm)) { ans <- ans %>% select(-gbm) }
   if(is.na(product_type)) { ans <- ans %>% select(-product_type) }
   if(is.na(com_code)) { ans <- ans %>% select(-com_code) }
