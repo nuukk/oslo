@@ -7,7 +7,7 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
     group_by(g1=second_cond,g2=third_cond) %>%
     group_walk(~ assign(x=paste0('table_',.x$second_cond[[1]],'_',.x$third_cond[[1]]),value=.x,.GlobalEnv))
   
-  res <- map(file_list, ~ {
+  res <- future_map(file_list, ~ {
     raw <- setDT(read_excel(.x))
     raw <- raw[!str_detect(url,'/support|/business/')]
     if(sum(names(raw)=='page')>=1) {
