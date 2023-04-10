@@ -20,7 +20,7 @@ Imports: dplyr,
          DBI,
         RMySQL,
         purrr (>= 1.0.0),
-         rlang,
+        rlang,
         gtrendsR,
         parallel,
         magrittr,
@@ -35,5 +35,6 @@ Imports: dplyr,
         RSelenium,
         webdriver,
         rvest,
-        collapse
+        collapse,
+        furrr
 Encoding: UTF-8
