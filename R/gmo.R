@@ -34,7 +34,7 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
   },.progress=TRUE) %>% rbindlist
   ## Series
   future_map(series$cond, ~ {
-    res[`2nd` %chin% c('mobile','smartphones','microsite') & str_detect(`3rd`,.x) | str_detect(`4th`,.x),
+    res[`2nd` %chin% c('mobile','smartphones','microsite') & (str_detect(`3rd`,.x) | str_detect(`4th`,.x)),
         Series:=series$model[series$cond==.x]]
   })
   
