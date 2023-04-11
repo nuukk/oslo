@@ -295,7 +295,7 @@ gkp_read2 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,save_
 gkp_read3 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_kw=NULL,date_interval=c('year','month'),save_name=NULL,export_dir) {
   date_interval <- match.arg(date_interval)
   if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
-  ans <- map(file_list, ~ {
+  ans <- future_map(file_list, ~ {
     gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
     res <- gkp %>% select(Keyword,starts_with('Search')) %>% data.table %>% melt(id='Keyword')
     res[,variable:=my(gsub("Searches..","",variable))]
@@ -337,7 +337,7 @@ gkp_read4 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
   if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
   if(missing(obs)) obs <- gsub("[^0-9]","",basename(.x))
   if(!is.null(seed_kw)) { setDT(seed_kw) }
-  ans <- map(file_list, ~ {
+  ans <- future_map(file_list, ~ {
     gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
     res <- gkp %>% select(Keyword,starts_with('Search')) %>% data.table %>% melt(id='Keyword')
     res[,variable:=my(gsub("Searches..","",variable))]
