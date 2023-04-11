@@ -30,9 +30,10 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
     raw[is.na(Division) | Division %chin% 'character(0)',Division:='Common']
     raw[,`:=`(GBM=Division,
               GBM_Detail=Division)]
-    raw[!str_detect(url,'www.samsung.com'),`:=`(Division='Subdomain',GBM_Detail='Subdomain')]
+    # raw[!str_detect(url,'www.samsung.com'),`:=`(Division='Subdomain',GBM_Detail='Subdomain')] #subdomain도 폐지? (추후 수정)
   },.progress=TRUE) %>% rbindlist
   ## Series
+  #res <- copy(raw)
   future_map(series$cond, ~ {
     res[`2nd` %chin% c('mobile','smartphones','microsite') & (str_detect(`3rd`,.x) | str_detect(`4th`,.x)),
         Series:=series$model[series$cond==.x]]
@@ -51,12 +52,12 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
   
   if(sum(names(res)=='total_position')==1) {
     #GSC RAW
-      res <- res[,.(sitecode,month,page=url,GBM=Division,GBM_Detail,`2nd`,`3rd`,series=Series,series_Detail=Series_Detail,
-                    smartphones,clicks,impressions,position,total_position,Division,`4th`)]
+    res <- res[,.(sitecode,month,page=url,GBM=Division,GBM_Detail,`2nd`,`3rd`,series=Series,series_Detail=Series_Detail,
+                  smartphones,clicks,impressions,position,total_position,division=Division,`4th`)]
   } else {
     #AA RAW
     res <- res[,.(sitecode=country,month,url,GBM=Division,GBM_Detail,`2nd`,`3rd`,
-                  series=Series,series_Detail=Series_Detail,smartphones,`natural traffic`,Division,`4th`)]
+                  series=Series,series_Detail=Series_Detail,smartphones,`natural traffic`,division=Division,`4th`)]
   }
   rm(list=ls(pattern='^table_contain_|^table_equal_',envir=.GlobalEnv),envir=.GlobalEnv)
   if(!is.null(old_file)) {
@@ -66,12 +67,12 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
   }
   if(!is.null(dbname)) {
     if(sum(names(res)=='total_position')==1) {
-      res <- res[,.(sitecode,month,page=url,GBM=Division,GBM_Detail,URL_2nd=`2nd`,URL_3rd=`3rd`,series=Series,series_Detail=Series_Detail,
-                    smartphones,clicks,impressions,position,total_position,Division,URL_4th=`4th`)]
+      res <- res[,.(sitecode,month,page,GBM=Division,GBM_Detail,URL_2nd=`2nd`,URL_3rd=`3rd`,series,series_Detail,
+                    smartphones,clicks,impressions,position,total_position,division,URL_4th=`4th`)]
       table <- 'GMC_B2C_month_page_GSC'
     } else {
-      res[,.(sitecode=country,month,url,GBM=Division,GBM_Detail,URL_2nd=`2nd`,url_3rd=`3rd`,
-             series=Series,series_Detail=Series_Detail,smartphones,`natural traffic`,Division,url_4th=`4th`)]
+      res[,.(sitecode,month,url,GBM,GBM_Detail,URL_2nd=`2nd`,url_3rd=`3rd`,
+             series,series_Detail,smartphones,`natural traffic`,division,url_4th=`4th`)]
       table <- 'GMC_B2C_month_page_AA'
     }
     db_upload(dbname=dbname,dbuser=dbuser,dbpw=dbpw,dbhost=dbhost,dbport=dbport,table=table,res)
