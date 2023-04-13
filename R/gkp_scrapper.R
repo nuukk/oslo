@@ -517,10 +517,10 @@ gkp_read5 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     res
   },.progress=TRUE) %>% rbindlist
   ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword','date')) #139607808
-  pmap(list(seed_kw_list$division,
-            seed_kw_list$sitecode,
-            seed_kw_list$gkp_code,
-            seed_kw_list$kw), function(a,b,c,d) {
+  pmap(list(seed_kw$division,
+            seed_kw$sitecode,
+            seed_kw$gkp_code,
+            seed_kw$kw), function(a,b,c,d) {
               ans[gbm==a & com_code==b & Region==c & Keyword==d,Seed_Related:='Seed']
             },.progress=TRUE)
   if(is.na(gbm)) { ans <- ans %>% select(-gbm) }
@@ -531,19 +531,4 @@ gkp_read5 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
     save_csv(ans,filename=save_name,dir=export_dir)
   }
   ans
-}
-
-se_install <- function(path) {
-  path <- paste0('C:/',path)
-  dir.create(path)
-  download.file(url='https://github.com/mozilla/geckodriver/releases/download/v0.17.0/geckodriver-v0.17.0-win64.zip',
-                destfile=file.path(path,'geckodriver.zip'))
-  unzip(zipfile=file.path(path,'geckodriver.zip'),exdir=path)
-  file.remove(file.path(path,'geckodriver.zip'))
-  download.file(url='http://selenium-release.storage.googleapis.com/4.0/selenium-server-standalone-4.0.0-alpha-1.jar',
-                destfile=file.path(path,'selenium-server-standalone-4.0.0-alpha-1.jar'))
-  download.file(url='https://chromedriver.storage.googleapis.com/109.0.5414.74/chromedriver_win32.zip',
-                destfile=file.path(path,'chrome-driver.zip'))
-  unzip(zipfile=file.path(path,'chrome-driver.zip'),files='chromedriver.exe',exdir=path)
-  file.remove(file.path(path,'chrome-driver.zip'))
 }
