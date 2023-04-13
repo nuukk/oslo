@@ -1,4 +1,4 @@
-gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbuser,dbpow,dbhost,dbport) {
+gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbuser,dbpow,dbhost,dbport,table) {
   if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW  파일(들)을 선택해주세요')
   file_list <- normalizePath(file_list)
   series <- read_excel(excel_file,sheet="series_R", skip=2) %>% transmute(model=분류, cond=`3rd_4th_조건`)
@@ -69,11 +69,11 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
     if(sum(names(res)=='total_position')==1) {
       res <- res[,.(sitecode,month,page,GBM=Division,GBM_Detail,URL_2nd=`2nd`,URL_3rd=`3rd`,series,series_Detail,
                     smartphones,clicks,impressions,position,total_position,division,URL_4th=`4th`)]
-      table <- 'GMC_B2C_month_page_GSC'
+      #table <- 'GMC_B2C_month_page_GSC'
     } else {
       res[,.(sitecode,month,url,GBM,GBM_Detail,URL_2nd=`2nd`,url_3rd=`3rd`,
              series,series_Detail,smartphones,`natural traffic`,division,url_4th=`4th`)]
-      table <- 'GMC_B2C_month_page_AA'
+      #table <- 'GMC_B2C_month_page_AA'
     }
     db_upload(dbname=dbname,dbuser=dbuser,dbpw=dbpw,dbhost=dbhost,dbport=dbport,table=table,res)
   }
