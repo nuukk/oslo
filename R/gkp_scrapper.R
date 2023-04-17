@@ -516,13 +516,15 @@ gkp_read5 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
                              Keyword,Seed_Related=Is_extended,date=variable,searches_gkp=value) %>% setDT
     res
   },.progress=TRUE) %>% rbindlist
-  ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword','date')) #139607808
-  pmap(list(seed_kw$division,
-            seed_kw$sitecode,
-            seed_kw$gkp_code,
-            seed_kw$kw), function(a,b,c,d) {
-              ans[gbm==a & com_code==b & Region==c & Keyword==d,Seed_Related:='Seed']
-            },.progress=TRUE)
+  ans <- funique(ans,cols=c('Region','com_code','gbm','product_type','Keyword','date'))
+  if(!is.null(seed_kw)) {
+    pmap(list(seed_kw$division,
+              seed_kw$sitecode,
+              seed_kw$gkp_code,
+              seed_kw$kw), function(a,b,c,d) {
+                ans[gbm==a & com_code==b & Region==c & Keyword==d,Seed_Related:='Seed']
+              },.progress=TRUE)
+  }
   if(is.na(gbm)) { ans <- ans %>% select(-gbm) }
   if(is.na(product_type)) { ans <- ans %>% select(-product_type) }
   if(is.na(com_code)) { ans <- ans %>% select(-com_code) }
