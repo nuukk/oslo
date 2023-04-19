@@ -505,6 +505,10 @@ gkp_read5 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
                                   default='Related'),
                 Seed_Keyword=res$Keyword[[1]])]
     } else {
+      seed_kw <- seed_kw %>% mutate(seed_kw_n=str_count(kw,",")+1) %>% 
+        group_by(obs) %>% slice(rep(1,each=seed_kw_n)) %>% 
+        mutate(n_in_grp=row_number(),
+               kw=str_split(kw,",")[[1]][n_in_grp])
       setDT(seed_kw)
       res[,Is_extended:='Related']
     }
