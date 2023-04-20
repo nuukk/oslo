@@ -1,4 +1,6 @@
-gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_name,print=FALSE,capture_path=NULL) {
+gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_name,print=FALSE,capture_path=NULL,vali=T) {
+  list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+             pattern=paste0('Keyword Stats ',Sys.Date()),full.names=T) %>% file.remove
   lang <- match.arg(lang,choices=c('Arabic','Bengali','Bulgarian','Catalan','Chinese (simplified)','Chinese (traditional)','Croatian','Czech','Danish','Dutch','English','Estonian','Filipino','Finnish','French','German','Greek','Gujarati','Hebrew','Hindi','Hungarian','Icelandic','Indonesian','Italian','Japanese','Kannada','Korean','Latvian','Lithuanian','Malay','Malayalam','Marathi','Norwegian','Persian','Polish','Portuguese','Punjabi','Romanian','Russian','Serbian','Slovak','Slovenian','Spanish','Swedish','Tamil','Telugu','Thai','Turkish','Ukrainian','Urdu','Vietnamese'))
   Sys.sleep(1+runif(n=1,min=0.25,max=0.5)+abs(rnorm(n=1,mean=0.25,sd=0.25)))
   if(!missing(start_date)) {
@@ -20,7 +22,7 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
     remDr$findElement(using='css',value='.apply-bar')$findChildElement(using='css',value='.apply')$clickElement()
     Sys.sleep(0.35+runif(n=1,min=0.15,max=0.5))
   }
-   ##location
+  ##location
   x <- remDr$getPageSource()[[1]]
   old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
   # old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
@@ -87,6 +89,15 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
                                   pattern=paste0('Keyword Stats ',Sys.Date()),full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
                 rbindlist %>% slice_max(time,n=1L) %>% pull(file),
               to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
+  
+  if(vali==T) {
+    temp <- (file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')) %>% 
+               read.csv(skip=2,fileEncoding='UTF-16LE',sep="\t",header=T))$Keyword 
+    seed_kw <- str_split(keyword,",")[[1]]
+    if(sum(temp$Keyword %chin% seed_kw)==0) {
+      file.remove("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv'))
+    }
+  }
   Sys.sleep(1)
   if(print==TRUE) { print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료')) }
   if(!is.null(capture_path)) {
