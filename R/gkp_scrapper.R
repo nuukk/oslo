@@ -307,6 +307,75 @@ gkp_simple <- function(keyword,start_date,end_date,country,new_name,print=FALSE)
   }
 }
 
+gkp_simple2 <- function(start_date,end_date,country,new_name,print=FALSE) {
+  Sys.sleep(2)
+  if(!missing(start_date)) {
+    start_date <- paste0(month(as.Date(start_date),label=T,locale='US'),year(start_date))
+    remDr$findElement(using='class name',value='date-popup-button')$clickElement()
+    remDr$findElement(using='css',value='.start')$findChildElement(using='css',value='.baseline')$findChildElement(using='css',value='.top-section')$findChildElement(using='css',value='.input')$clearElement()
+    remDr$findElement(using='css',value='.start')$sendKeysToElement(list(start_date))
+    remDr$findElement(using='css',value='.start')$sendKeysToElement(list(key='enter'))
+    remDr$findElement(using='css',value='.apply-bar')$findChildElement(using='css',value='.apply')$clickElement()
+    Sys.sleep(0.35+runif(n=1,min=0.15,max=0.5))
+  }
+  if(!missing(end_date)) {
+    end_date <- paste0(month(as.Date(end_date),label=T,locale='US'),year(end_date))
+    remDr$findElement(using='class name',value='date-popup-button')$clickElement()
+    remDr$findElement(using='css',value='.end')$clickElement()
+    remDr$findElement(using='css',value='.end')$findChildElement(using='css',value='.baseline')$findChildElement(using='css',value='.top-section')$findChildElement(using='css',value='.input')$clearElement()
+    remDr$findElement(using='css',value='.end')$sendKeysToElement(list(end_date))
+    remDr$findElement(using='css',value='.end')$sendKeysToElement(list(key='enter'))
+    remDr$findElement(using='css',value='.apply-bar')$findChildElement(using='css',value='.apply')$clickElement()
+    Sys.sleep(0.35+runif(n=1,min=0.15,max=0.5))
+  }
+    #location
+    x <- remDr$getPageSource()[[1]]
+    old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
+    # old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
+    if(old_country!=country) {
+      remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
+      old_country0 <- map(seq_len(length(remDr$findElements(using='class name',value='target-description'))), ~ remDr$findElements(using='class name',value='target-description')[[.x]]$getElementText()[[1]]) %>% as.character %>% gsub("\ncountry","",.)
+      country <- str_split(country,',')[[1]]
+      if(isTRUE(all.equal(sort(gsub(" ","",country)),sort(gsub(" ","",old_country0))))) {
+        remDr$findElements(using='css',value='.btn-no')[[3]]$clickElement()
+      } else {
+        remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 모든 location 제거
+        for(i in seq_along(country)) {
+          remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
+          remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country[[i]])) #location 입력
+          Sys.sleep(2)
+          remDr$findElement(using='class name',value='suggestion-item')$clickElement() #enter
+        }
+        remDr$findElements(using='class name',value='btn-yes')[[11]]$clickElement() #save
+      }
+    }
+    
+    
+    #save (1)
+    Sys.sleep(runif(n=1,min=1,max=2.5))
+    remDr$findElements(using='class name',value='action-button')[[2]]$clickElement()
+    Sys.sleep(0.75)
+    remDr$findElements(using='class name',value='menu-item-label-section')[[3]]$clickElement()
+    
+    #rename
+    Sys.sleep(5)
+    
+    is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                   pattern=paste0('Keyword Stats ',Sys.Date())))
+    while(is_finish==0) {
+      Sys.sleep(1.5)
+      is_finish <- length(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                     pattern=paste0('Keyword Stats ',Sys.Date())))
+    }
+    Sys.sleep(1)
+    file.rename(from=map(list.files((file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads")),
+                                    pattern=paste0('Keyword Stats ',Sys.Date()),full.names=T), ~ data.table(file=.x,time=file.mtime(.x))) %>%
+                  rbindlist %>% slice_max(time,n=1L) %>% pull(file),
+                to=file.path("C:","Users",Sys.getenv("USERNAME"),"Downloads",paste0(new_name,'.csv')))
+    Sys.sleep(1)
+    if(print==TRUE) { print(paste0(country,' - ',start_date,'~',end_date,'(',lang,') 추출 완료')) }
+}
+
 gkp_read <- function(file_list,country,gbm=NA,product_type=NA,type,save_name=NULL,export_dir) {
   if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
   type <- match.arg(type,choices=c('extended','base'))
