@@ -618,3 +618,29 @@ gkp_read5 <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,seed_
   }
   ans
 }
+
+gkp_read_base <- function(file_list,country,com_code=NA,gbm=NA,product_type=NA,save_name=NULL,export_dir) {
+  if(missing(file_list)) file_list <- choose.files(caption='전처리할 GKP RAW DATA를 선택하세요')
+  ans <- map(file_list, ~ {
+    gkp <- read.csv(.x,skip=2,fileEncoding='UTF-16LE',sep="\t",header=T)
+    real_country <- gkp$Segmentation[[2]]
+    res <- gkp %>% select(Keyword,starts_with('Search')) %>% data.table %>% melt(id='Keyword')
+    res[,variable:=my(gsub("Searches..","",variable))]
+    country <- gsub(country,"",basename(.x))
+    if(!is.na(com_code)) com_code <- gsub(com_code,"",basename(.x))
+    if(!is.na(gbm)) gbm <- gsub(gbm,"",basename(.x))
+    if(!is.na(product_type)) product_type <- gsub(product_type,"",basename(.x))
+    res <- res %>% transmute(Region=country,real_country,com_code=com_code,gbm=gbm,product_type=product_type,
+                             Keyword,date=variable,searches_gkp=value) %>% setDT
+    res
+  },.progress=TRUE) %>% rbindlist
+  ans <- funique(ans,cols=c('Region','real_country','com_code','gbm','product_type','Keyword','date'))
+  if(is.na(gbm)) { ans <- ans %>% select(-gbm) }
+  if(is.na(product_type)) { ans <- ans %>% select(-product_type) }
+  if(is.na(com_code)) { ans <- ans %>% select(-com_code) }
+  if(!is.null(save_name)) {
+    if(missing(export_dir)) { export_dir <- choose.dir(caption='전처리된 자료를 저장할 폴더를 선택하세요' )}
+    save_csv(ans,filename=save_name,dir=export_dir)
+  }
+  ans
+}
