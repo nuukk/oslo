@@ -1,4 +1,4 @@
-gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbuser,dbpow,dbhost,dbport,table) {
+gmo_preprocessor <- function(file_list,excel_file,cat_excel_file,old_file=NULL,export_dir=getwd()) {
   if(missing(file_list)) file_list <- choose.files(caption='전처리에 사용될 RAW  파일(들)을 선택해주세요')
   file_list <- normalizePath(file_list)
   series <- read_excel(excel_file,sheet="series_R", skip=2) %>% transmute(model=분류, cond=`3rd_4th_조건`)
@@ -8,16 +8,20 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
     group_walk(~ assign(x=paste0('table_',.x$second_cond[[1]],'_',.x$third_cond[[1]]),value=.x,.GlobalEnv))
   
   res <- future_map(file_list, ~ {
-    raw <- setDT(read_excel(.x))
-    raw <- raw[!str_detect(url,'/support|/business/')]
-    if(sum(names(raw)=='page')>=1) {
+    if(str_ends(.x,'xlsx|.xlx')) {
+      raw <- setDT(read_excel(.x))
+    } else if(str_ends(.x,'.csv')) {
+      raw <- fread(.x)
+    }
+    if(sum(names(raw)=='query')==0) {
       raw <- raw %>% mutate(sitecode=gsub(".*com/|/$","",url),total_position=impressions*position,
                             month=ym(gsub("[^0-9]","",basename(.x)))) %>% 
-        select(-url) %>% rename(url=page)
+        select(-url)
     }
-    raw[,`:=`(`2nd`=str_split_fixed(url,'/',7)[,5],
-              `3rd`=str_split_fixed(url,'/',7)[,6],
-              `4th`=str_split_fixed(url,'/',7)[,7])]
+    raw[,`:=`(`2nd`=str_split_fixed(page,'/',7)[,5],
+              `3rd`=str_split_fixed(page,'/',7)[,6],
+              `4th`=str_split_fixed(page,'/',7)[,7],
+              `5th`=str_split_fixed(page,'/',9)[,8])]
     raw[`2nd` %chin% table_equal_NA$second_dir & !`2nd` %chin% table_equal_equal$second_dir & !`2nd` %chin% table_equal_contain$second_dir,
         Division:=as.character(future_map(`2nd`, ~ table_equal_NA$GBM[table_equal_NA$second_dir==.x]))]
     raw[str_detect(`2nd`,paste0(table_contain_NA$second_dir,collapse='|')) & (is.na(Division) | Division=='character(0)'),
@@ -30,10 +34,8 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
     raw[is.na(Division) | Division %chin% 'character(0)',Division:='Common']
     raw[,`:=`(GBM=Division,
               GBM_Detail=Division)]
-    # raw[!str_detect(url,'www.samsung.com'),`:=`(Division='Subdomain',GBM_Detail='Subdomain')] #subdomain도 폐지? (추후 수정)
   },.progress=TRUE) %>% rbindlist
   ## Series
-  #res <- copy(raw)
   future_map(series$cond, ~ {
     res[`2nd` %chin% c('mobile','smartphones','microsite') & (str_detect(`3rd`,.x) | str_detect(`4th`,.x)),
         Series:=series$model[series$cond==.x]]
@@ -42,41 +44,150 @@ gmo_preprocessor <- function(file_list,excel_file,old_file=NULL,dbname=NULL,dbus
   res[,Series:=as.character(Series)]
   res$Series[is.na(res$Series)] <- ""
   res[,Series_Detail:=Series]
-  res[Series_Detail %chin% 'Z' & str_detect(url,'z-fold'),Series_Detail:='z-fold']
-  res[Series_Detail %chin% 'Z' & str_detect(url,'z-flip'),Series_Detail:='z-flip']
+  res[Series_Detail %chin% 'Z' & str_detect(page,'z-fold'),Series_Detail:='z-fold']
+  res[Series_Detail %chin% 'Z' & str_detect(page,'z-flip'),Series_Detail:='z-flip']
   
   ####[smartphones]
   res[,smartphones:=fcase(`2nd` %chin% c('mobile','smartphones'),'(MX)smartphones',
                           Division %chin% 'MX', '(MX)others',
                           default="")]
   
-  if(sum(names(res)=='total_position')==1) {
-    #GSC RAW
-    res <- res[,.(sitecode,month,page=url,GBM=Division,GBM_Detail,`2nd`,`3rd`,series=Series,series_Detail=Series_Detail,
-                  smartphones,clicks,impressions,position,total_position,division=Division,`4th`)]
+  ## Cat,SubCat 관련 내용 추가 ##
+  names(res)[names(res) %chin% c('2nd','3rd','4th','5th')] <- paste0('URL_',names(res)[names(res) %chin% c('2nd','3rd','4th','5th')])
+  names(res)[names(res)=='Division'] <- 'division'
+  
+  res[URL_2nd %chin% 'apps',`:=`(category='apps',subcategory='apps')]
+  res[URL_2nd %chin% 'offer',`:=`(category='offer',subcategory='offer')]
+  res[URL_2nd %chin% 'explore',`:=`(category='explore',subcategory='explore')]
+  res[URL_2nd %chin% c('memory-storage','ssd'),`:=`(category='memory-storage',subcategory='memory-storage')]
+  
+  if(missing(cat_excel_file)) cat_excel_file <- choose.files(caption='Category/SubCategory Xlsx 파일을 선택하세요')
+  cats <- map(excel_sheets(cat_excel_file)[1:4], ~ data.table(division=.x,read_excel(cat_excel_file,sheet=.x)) %>% 
+                select(division,
+                       cond2=`조건...1`,dir2=`2D`,
+                       cond3=`조건...3`,dir3=`3D`,
+                       cond4=`조건...5`,dir4=`4D`,
+                       cond5=`조건...7`,dir5=`5D`,cat=Category,subcat=Subcategory)) %>% rbindlist
+  
+  cats %>% filter(division!='Common' & is.na(cond5)) %>% select(division,cond2,dir2,cond3,dir3,cond4,dir4,cat,subcat) %>% 
+    group_by(g1=cond2,g2=cond3,g3=cond4) %>% 
+    group_walk(~assign(x=paste0('cat1_',.x$cond2[[1]],'_',.x$cond3[[1]],'_',.x$cond4[[1]]),
+                       value=.x,
+                       .GlobalEnv))
+  
+  pmap(list(cat1_contain_contain_NA$division,
+            cat1_contain_contain_NA$dir2,
+            cat1_contain_contain_NA$dir3,
+            cat1_contain_contain_NA$cat,cat1_contain_contain_NA$subcat),
+       function(div,c1,c2,cat,subcat) {
+         res[is.na(category) & division==div & str_detect(URL_2nd,c1) & str_detect(URL_3rd,c2),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_contain_NA_NA$division,
+            cat1_contain_NA_NA$dir2,
+            cat1_contain_NA_NA$cat,cat1_contain_NA_NA$subcat),
+       function(div,c1,cat,subcat) {
+         res[is.na(category) & division==div & str_detect(URL_2nd,c1),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_contain_contain$division,
+            cat1_equal_contain_contain$dir2,
+            cat1_equal_contain_contain$dir3,
+            cat1_equal_contain_contain$dir4,
+            cat1_equal_contain_contain$cat,cat1_equal_contain_contain$subcat),
+       function(div,c1,c2,c3,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & str_detect(URL_3rd,c2) & str_detect(URL_4th,c3),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_contain_equal$division,
+            cat1_equal_contain_equal$dir2,
+            cat1_equal_contain_equal$dir3,
+            cat1_equal_contain_equal$dir4,
+            cat1_equal_contain_equal$cat,cat1_equal_contain_equal$subcat),
+       function(div,c1,c2,c3,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & str_detect(URL_3rd,c2) & URL_4th %chin% c3,`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_contain_NA$division,
+            cat1_equal_contain_NA$dir2,
+            cat1_equal_contain_NA$dir3,
+            cat1_equal_contain_NA$cat,cat1_equal_contain_NA$subcat),
+       function(div,c1,c2,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & str_detect(URL_3rd,c2),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_equal_contain$division,
+            cat1_equal_equal_contain$dir2,
+            cat1_equal_equal_contain$dir3,
+            cat1_equal_equal_contain$dir4,
+            cat1_equal_equal_contain$cat,cat1_equal_equal_contain$subcat),
+       function(div,c1,c2,c3,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & URL_3rd %chin% c2 & str_detect(URL_4th,c3),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_equal_equal$division,
+            cat1_equal_equal_equal$dir2,
+            cat1_equal_equal_equal$dir3,
+            cat1_equal_equal_equal$dir4,
+            cat1_equal_equal_equal$cat,cat1_equal_equal_equal$subcat),
+       function(div,c1,c2,c3,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & URL_3rd %chin% c2 & URL_4th %chin% c3,`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_equal_NA$division,
+            cat1_equal_equal_NA$dir2,
+            cat1_equal_equal_NA$dir3,
+            cat1_equal_equal_NA$cat,cat1_equal_equal_NA$subcat),
+       function(div,c1,c2,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & URL_3rd %chin% c2,`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat1_equal_NA_NA$division,
+            cat1_equal_NA_NA$dir2,
+            cat1_equal_NA_NA$cat,cat1_equal_NA_NA$subcat),
+       function(div,c1,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1,`:=`(category=cat,subcategory=subcat)]
+       })
+  cats %>% filter(division!='Common' & !is.na(cond5)) %>% select(division,cond2,dir2,cond3,dir3,cond4,dir4,cond5,dir5,cat,subcat) %>% 
+    group_by(g1=cond2,g2=cond3,g3=cond4,g4=cond5) %>% 
+    group_walk(~assign(x=paste0('cat2_',.x$cond2[[1]],'_',.x$cond3[[1]],'_',.x$cond4[[1]],'_',.x$cond5[[1]]),
+                       value=.x,
+                       .GlobalEnv))
+  pmap(list(cat2_equal_contain_equal_contain$division,
+            cat2_equal_contain_equal_contain$dir2,
+            cat2_equal_contain_equal_contain$dir3,
+            cat2_equal_contain_equal_contain$dir4,
+            cat2_equal_contain_equal_contain$dir5,
+            cat2_equal_contain_equal_contain$cat,cat2_equal_contain_equal_contain$subcat),
+       function(div,c1,c2,c3,c4,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & str_detect(URL_3rd,c2) & URL_4th %chin% c3 & str_detect(URL_5th,c4),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat2_equal_contain_equal_contain$division,
+            cat2_equal_contain_equal_contain$dir2,
+            cat2_equal_contain_equal_contain$dir3,
+            cat2_equal_contain_equal_contain$dir4,
+            cat2_equal_contain_equal_contain$dir5,
+            cat2_equal_contain_equal_contain$cat,cat2_equal_contain_equal_contain$subcat),
+       function(div,c1,c2,c3,c4,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & str_detect(URL_3rd,c2) & URL_4th %chin% c3 & str_detect(URL_5th,c4),`:=`(category=cat,subcategory=subcat)]
+       })
+  pmap(list(cat2_equal_equal_equal_contain$division,
+            cat2_equal_equal_equal_contain$dir2,
+            cat2_equal_equal_equal_contain$dir3,
+            cat2_equal_equal_equal_contain$dir4,
+            cat2_equal_equal_equal_contain$dir5,
+            cat2_equal_equal_equal_contain$cat,cat2_equal_equal_equal_contain$subcat),
+       function(div,c1,c2,c3,c4,cat,subcat) {
+         res[is.na(category) & division==div & URL_2nd %chin% c1 & URL_3rd %chin% c2 & URL_4th %chin% c3 & str_detect(URL_5th,c4),`:=`(category=cat,subcategory=subcat)]
+       })
+  res[is.na(category),`:=`(category='others',subcategory='others')]
+  if(sum(names(res) %chin% 'query')==0) {
+    res <- res[,.(sitecode,month,page,GBM,GBM_Detail,URL_2nd,URL_3rd,series=Series,series_Detail=Series_Detail,smartphones,
+                  clicks,impressions,position,total_position,division,URL_4th,URL_5th,category,subcategory)]
+    file_name <- paste0("GMC_B2C_month_page_GSC-",min(res$month),"-",max(res$month))
   } else {
-    #AA RAW
-    res <- res[,.(sitecode=country,month,url,GBM=Division,GBM_Detail,`2nd`,`3rd`,
-                  series=Series,series_Detail=Series_Detail,smartphones,`natural traffic`,division=Division,`4th`)]
+    res <- res[,.(page,query,clicks,impressions,ctr,position,month,sitecode=SiteCode,URL_2nd,URL_3rd,URL_4th,URL_5th,division,category,subcategory)]
+    file_name <- paste0("GMC_B2C_month_page_query_GSC-",min(res$month),"-",max(res$month))
   }
-  rm(list=ls(pattern='^table_contain_|^table_equal_',envir=.GlobalEnv),envir=.GlobalEnv)
+  rm(list=ls(pattern='^table_contain_|^table_equal_|^cat1_|^cat2_',envir=.GlobalEnv),envir=.GlobalEnv)
   if(!is.null(old_file)) {
     file.copy(from=old_file,
-              to=file.path(dirname(old_file),paste0(basename(old_file),"의 백업자료")))
+              to=file.path(dirname(old_file),paste0("백업본-",basename(old_file))))
     fwrite(res,file=old_file,append=TRUE)
   }
-  if(!is.null(dbname)) {
-    if(sum(names(res)=='total_position')==1) {
-      res <- res[,.(sitecode,month,page,GBM=Division,GBM_Detail,URL_2nd=`2nd`,URL_3rd=`3rd`,series,series_Detail,
-                    smartphones,clicks,impressions,position,total_position,division,URL_4th=`4th`)]
-      #table <- 'GMC_B2C_month_page_GSC'
-    } else {
-      res[,.(sitecode,month,url,GBM,GBM_Detail,URL_2nd=`2nd`,url_3rd=`3rd`,
-             series,series_Detail,smartphones,`natural traffic`,division,url_4th=`4th`)]
-      #table <- 'GMC_B2C_month_page_AA'
-    }
-    db_upload(dbname=dbname,dbuser=dbuser,dbpw=dbpw,dbhost=dbhost,dbport=dbport,table=table,res)
-  }
+  save_csv(res,filename=file_name,dir=export_dir)
   res
 }
 
