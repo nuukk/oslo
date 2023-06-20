@@ -23,24 +23,26 @@ gkp_scrapper <- function(start_date,end_date,keyword,country,lang='English',new_
     Sys.sleep(0.35+runif(n=1,min=0.15,max=0.5))
   }
   ##location
-  x <- remDr$getPageSource()[[1]]
-  old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
-  # old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
-  if(old_country!=country) {
-    remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
-    old_country0 <- map(seq_len(length(remDr$findElements(using='class name',value='target-description'))), ~ remDr$findElements(using='class name',value='target-description')[[.x]]$getElementText()[[1]]) %>% as.character %>% gsub("\ncountry","",.)
-    country <- str_split(country,',')[[1]]
-    if(isTRUE(all.equal(sort(gsub(" ","",country)),sort(gsub(" ","",old_country0))))) {
-      remDr$findElements(using='css',value='.btn-no')[[3]]$clickElement()
-    } else {
-      remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 모든 location 제거
-      for(i in seq_along(country)) {
-        remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
-        remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country[[i]])) #location 입력
-        Sys.sleep(2)
-        remDr$findElement(using='class name',value='suggestion-item')$clickElement() #enter
+  if(!missing(country)) {
+    x <- remDr$getPageSource()[[1]]
+    old_country <- ((read_html(x) %>% html_elements('.settings-bar') %>% html_children)[[1]] %>% html_children)[[2]] %>% html_text2
+    # old_country <- ifelse(str_detect(gsub(" ","",tolower(old_country)),'hongkong'),'hong kong region',old_country)
+    if(old_country!=country) {
+      remDr$findElement(using='class name',value='location-button')$clickElement() #remDr$findElement(using='css',value='.settings-bar>.location-button')$clickElement()
+      old_country0 <- map(seq_len(length(remDr$findElements(using='class name',value='target-description'))), ~ remDr$findElements(using='class name',value='target-description')[[.x]]$getElementText()[[1]]) %>% as.character %>% gsub("\ncountry","",.)
+      country <- str_split(country,',')[[1]]
+      if(isTRUE(all.equal(sort(gsub(" ","",country)),sort(gsub(" ","",old_country0))))) {
+        remDr$findElements(using='css',value='.btn-no')[[3]]$clickElement()
+      } else {
+        remDr$findElement(using='css',value='[aria-label="Remove all targeted locations"]')$clickElement() #기존 설정된 모든 location 제거
+        for(i in seq_along(country)) {
+          remDr$findElement(using='class name',value='suggest-input')$clickElement() #enter a location to target
+          remDr$findElement(using='class name',value='suggest-input')$sendKeysToElement(list(country[[i]])) #location 입력
+          Sys.sleep(2)
+          remDr$findElement(using='class name',value='suggestion-item')$clickElement() #enter
+        }
+        remDr$findElements(using='class name',value='btn-yes')[[3]]$clickElement() #save
       }
-      remDr$findElements(using='class name',value='btn-yes')[[3]]$clickElement() #save
     }
   }
   #language
